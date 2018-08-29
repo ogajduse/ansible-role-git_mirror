@@ -1,0 +1,9 @@
+[Unit]
+Description=Git Activation Socket
+
+[Socket]
+ListenStream={{ service_file_listen_port }}
+Accept=true
+
+[Install]
+WantedBy=sockets.target

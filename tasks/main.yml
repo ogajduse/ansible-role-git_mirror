@@ -1,0 +1,90 @@
+---
+- name: Install required packages
+  yum:
+    name:
+      - git-daemon
+    state: present
+
+- name: Create {{ repository_group }} group
+  group:
+    name: "{{ repository_group }}"
+    state: present
+
+- name: Create {{ repository_owner }} user
+  user:
+    name: "{{ repository_owner }}"
+    comment: "{{ repository_owner }} has been created by Ansible playbook"
+    state: present
+    group: "{{ repository_group }}"
+    create_home: yes
+
+- name: Create '.ssh' directory for {{ repository_owner }} user
+  file:
+    path: /home/{{ repository_owner }}/.ssh
+    state: directory
+    owner: "{{ repository_owner }}"
+    group: "{{ repository_group }}"
+    mode: 0700
+
+- name: Copy SSH private ssh_key
+  copy:
+    src: ssh_keypair/id_rsa_sat6
+    dest: /home/{{ repository_owner }}/.ssh/id_rsa
+    owner: "{{ repository_owner }}"
+    group: "{{ repository_group }}"
+    mode: 0400
+
+- name: Copy SSH public key
+  copy:
+    src: ssh_keypair/id_rsa_sat6.pub
+    dest: /home/{{ repository_owner }}/.ssh/id_rsa.pub
+    owner: "{{ repository_owner }}"
+    group: "{{ repository_group }}"
+    mode: 0664
+
+- name: Install git@.service
+  template:
+    src: git-daemon@.service
+    dest: "{{ service_file_destination }}/git-daemon@.service"
+    owner: "{{ service_file_owner }}"
+    group: "{{ service_file_group }}"
+    mode: "{{ service_file_mode }}"
+  notify:
+    - reload systemd
+    - start and enable git-daemon.socket
+
+- name: Install git-daemon.socket
+  template:
+    src: git-daemon.socket
+    dest: "{{ service_file_destination }}/git-daemon.socket"
+    owner: "{{ service_file_owner }}"
+    group: "{{ service_file_group }}"
+    mode: "{{ service_file_mode }}"
+  notify:
+    - reload systemd
+    - start and enable git-daemon.socket
+
+- meta: flush_handlers
+
+- name: Set {{ repository_owner }} as the owner of the {{ repository_destination }} directory
+  file:
+    dest: "{{ repository_destination }}"
+    owner: "{{ repository_owner }}"
+    group: "{{ repository_group }}"
+    recurse: yes
+
+- name: collect facts about system services
+  service_facts:
+  register: services_state
+  tags:
+    - fff
+
+- name: Open firewall port for git-daemon
+  firewalld:
+    port: "{{ service_file_listen_port }}/tcp"
+    permanent: true
+    state: enabled
+    immediate: true
+  when: ansible_facts['services']['firewalld.service']['state'] == "running"
+  tags:
+    - fff

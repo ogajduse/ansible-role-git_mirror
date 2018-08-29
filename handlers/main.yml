@@ -1,0 +1,9 @@
+---
+- name: reload systemd
+  systemd:
+    daemon_reload: yes
+- name: start and enable git-daemon.socket
+  service:
+    name: git-daemon.socket
+    state: started
+    enabled: true

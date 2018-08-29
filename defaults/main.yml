@@ -1,0 +1,9 @@
+---
+    service_file_destination: "/etc/systemd/system/"
+    service_file_owner: root
+    service_file_group: root
+    service_file_mode: 0644
+    service_file_listen_port: 9418
+    repository_destination: "/var/lib/git"
+    repository_owner: gitmirror
+    repository_group: gitmirror
