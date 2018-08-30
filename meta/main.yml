@@ -1,6 +1,7 @@
 ---
 # Standards: 0.2
 galaxy_info:
+  role_name: git_mirror
   author: Satellite QE Team
   description: Satellite QE Team
   company: Red Hat
